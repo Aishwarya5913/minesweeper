@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Databases & local test files
+*.db
+!minesweeper.db
+test_*.db
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Vercel
+.vercel/

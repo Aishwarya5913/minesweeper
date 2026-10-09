@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minesweeper</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Game Header Card -->
+    <header class="game-header">
+      <div class="header-left">
+        <h1 class="logo-title">
+          <span class="logo-icon">💣</span> Minesweeper
+        </h1>
+        <div class="palette-swatch-bar" title="Custom Theme Palette">
+          <span class="dot d1"></span>
+          <span class="dot d2"></span>
+          <span class="dot d3"></span>
+          <span class="dot d4"></span>
+          <span class="dot d5"></span>
+          <span class="dot d6"></span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="instructionsBtn" class="btn btn-secondary" title="Learn How to Play">
+          <span class="btn-icon">📖</span> Instructions
+        </button>
+        <button id="leaderboardBtn" class="btn btn-secondary" title="View High Scores">
+          <span class="btn-icon">🏆</span> Leaderboard
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Box -->
+    <main class="game-card">
+      <!-- Toolbar / Difficulty Selection -->
+      <div class="game-toolbar">
+        <div class="difficulty-group">
+          <label for="difficultySelect" class="sr-only">Difficulty</label>
+          <select id="difficultySelect" class="styled-select">
+            <option value="beginner" selected>Beginner (9x9 · 10 Mines)</option>
+            <option value="intermediate">Intermediate (16x16 · 40 Mines)</option>
+            <option value="expert">Expert (16x30 · 99 Mines)</option>
+          </select>
+          <button id="newGameBtn" class="btn btn-primary" title="Start a fresh game">
+            <span class="btn-icon">🎮</span> Start New Game
+          </button>
+        </div>
+
+        <div class="toolbar-controls">
+          <button id="flagModeBtn" class="btn btn-toggle" title="Toggle Flagging Mode (Mobile Friendly)">
+            <span class="toggle-icon">🚩</span> Flag Mode: <span id="flagModeText">OFF</span>
+          </button>
+          <button id="hintBtn" class="btn btn-secondary btn-sm" title="Get a Safe Deduction Hint">
+            <span class="btn-icon">💡</span> Hint
+          </button>
+          <button id="soundToggleBtn" class="btn btn-icon-only" title="Toggle Sound">
+            <span id="soundIcon">🔊</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Status Bar -->
+      <div class="status-bar">
+        <!-- Mines Counter -->
+        <div class="counter-box" title="Remaining Mines">
+          <span class="counter-label">MINES</span>
+          <div id="minesCounter" class="counter-display">010</div>
+        </div>
+
+        <!-- Face / Reset Button -->
+        <button id="resetBtn" class="face-btn" title="Start New Game">
+          <span id="faceEmoji">🙂</span>
+        </button>
+
+        <!-- Timer Counter -->
+        <div class="counter-box" title="Elapsed Time">
+          <span class="counter-label">TIME</span>
+          <div id="timerCounter" class="counter-display">000</div>
+        </div>
+      </div>
+
+      <!-- Board Viewport -->
+      <div class="board-viewport">
+        <div id="board" class="minesweeper-board" role="grid" aria-label="Minesweeper Board">
+          <!-- Dynamically generated cells -->
+        </div>
+      </div>
+
+      <!-- Hint & Message Bar -->
+      <div id="messageBanner" class="message-banner hidden">
+        <span id="messageText">First move is always safe!</span>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Discrete Mathematics Powered Engine · Free Online Edition</p>
+    </footer>
+  </div>
+
+  <!-- INSTRUCTIONS MODAL -->
+  <div id="instructionsModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">📖 How to Play Minesweeper</h2>
+        <button class="modal-close" id="closeInstructionsBtn" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <section class="instruction-section">
+          <h3>🎯 The Objective</h3>
+          <p>
+            The goal of Minesweeper is to uncover all the safe squares on the board without detonating any hidden mines!
+          </p>
+        </section>
+
+        <section class="instruction-section">
+          <h3>🎮 How the Controls Work</h3>
+          <ul class="control-list">
+            <li><strong>Left Click / Tap:</strong> Reveals a covered square.</li>
+            <li><strong>Right Click / Long Press:</strong> Places or removes a red/gold flag 🚩 on suspected mines.</li>
+            <li><strong>Flag Mode Button:</strong> If on mobile or trackpad, click <em>Flag Mode</em> to switch left clicks between uncovering and flagging!</li>
+            <li><strong>Double Click / Chord:</strong> Clicking an already revealed number with all its neighboring flags placed will instantly clear remaining adjacent safe squares!</li>
+          </ul>
+        </section>
+
+        <section class="instruction-section">
+          <h3>🔢 Reading the Numbers</h3>
+          <p>
+            When you uncover a safe square, it reveals a number from <strong>1 to 8</strong>. This number indicates exactly how many of the <strong>8 directly touching squares</strong> (horizontal, vertical, diagonal) contain a mine.
+          </p>
+          <div class="example-grid-preview">
+            <div class="preview-item">
+              <span class="badge-num num-1">1</span> Touching 1 Mine
+            </div>
+            <div class="preview-item">
+              <span class="badge-num num-2">2</span> Touching 2 Mines
+            </div>
+            <div class="preview-item">
+              <span class="badge-num num-3">3</span> Touching 3 Mines
+            </div>
+          </div>
+        </section>
+
+        <section class="instruction-section">
+          <h3>💡 Winning Strategy & Tips</h3>
+          <ul class="tips-list">
+            <li><strong>Guaranteed Safe Start:</strong> Your very first click is guaranteed to be 100% safe and will open a generous cleared area.</li>
+            <li><strong>Look for Corners:</strong> A '1' located in an isolated corner only has one available neighbor, meaning that neighbor is definitely a mine!</li>
+            <li><strong>Satisfied Numbers:</strong> If a '1' already has one flagged mine touching it, all other neighbors around that '1' are completely safe to uncover.</li>
+            <li><strong>Use the Hint Button:</strong> Stuck on a difficult board? Click the <em>💡 Hint</em> button to analyze the board with logical deduction!</li>
+          </ul>
+        </section>
+      </div>
+      <div class="modal-footer">
+        <button id="gotItBtn" class="btn btn-primary">Got it! Let's Play</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD MODAL -->
+  <div id="leaderboardModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">🏆 Top Hall of Fame</h2>
+        <button class="modal-close" id="closeLeaderboardBtn" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Stats Summary -->
+        <div class="stats-cards-row">
+          <div class="stat-card">
+            <span class="stat-num" id="statTotalGames">0</span>
+            <span class="stat-label">Games Played</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" id="statTotalWins">0</span>
+            <span class="stat-label">Total Wins</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" id="statWinRate">0%</span>
+            <span class="stat-label">Win Rate</span>
+          </div>
+        </div>
+
+        <!-- Difficulty Tabs -->
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-diff="beginner">Beginner</button>
+          <button class="tab-btn" data-diff="intermediate">Intermediate</button>
+          <button class="tab-btn" data-diff="expert">Expert</button>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="table-container">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Time (sec)</th>
+                <th>Moves</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardTbody">
+              <tr>
+                <td colspan="5" class="table-empty">Loading records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeLeaderboardFooterBtn" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VICTORY MODAL (SCORE SUBMISSION) -->
+  <div id="victoryModal" class="modal-overlay hidden">
+    <div class="modal-box modal-sm text-center">
+      <div class="victory-header">
+        <span class="victory-trophy">🎉</span>
+        <h2 class="modal-title">Congratulations! You Won!</h2>
+        <p class="victory-time-msg">You cleared all mines in <strong id="victoryTime">0</strong> seconds!</p>
+      </div>
+      <form id="saveScoreForm" class="save-score-form">
+        <label for="playerNameInput" class="form-label">Enter your name for the Leaderboard:</label>
+        <input type="text" id="playerNameInput" class="styled-input" placeholder="Your Name" maxlength="20" required>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save to Leaderboard</button>
+          <button type="button" id="skipSaveBtn" class="btn btn-secondary">Skip</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
