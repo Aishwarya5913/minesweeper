@@ -12,11 +12,11 @@ class GridGraph:
         self.rows = rows
         self.cols = cols
 
-       self.vertices: Set[Vertex] = {
+        self.vertices: Set[Vertex] = {
             (r, c) for r in range(rows) for c in range(cols)
         }
 
-self.adjacency_list: Dict[Vertex, List[Vertex]] = {}
+    self.adjacency_list: Dict[Vertex, List[Vertex]] = {}
         self._build_graph()
 
     def _build_graph(self) -> None:
