@@ -1,13 +1,3 @@
-"""
-game_engine.py
-==============
-Game State Coordinator and Logic Engine.
-
-Connects the discrete mathematical primitives (Graph Theory, Set Theory,
-Combinatorics, Propositional Logic) to the Minesweeper game rules and
-provides a clean API for the server and web frontend.
-"""
-
 from typing import Dict, Any, Optional, Set, Tuple
 import time
 from discrete_math import (
@@ -18,7 +8,6 @@ from discrete_math import (
     PropositionalLogicSolver,
 )
 
-
 DIFFICULTY_PRESETS = {
     "beginner": {"rows": 9, "cols": 9, "mines": 10},
     "intermediate": {"rows": 16, "cols": 16, "mines": 40},
@@ -27,9 +16,6 @@ DIFFICULTY_PRESETS = {
 
 
 class MinesweeperGame:
-    """
-    Manages a single Minesweeper session using the discrete mathematics models.
-    """
 
     def __init__(self, difficulty: str = "beginner", rows: int = 9, cols: int = 9, mines: int = 10):
         if difficulty in DIFFICULTY_PRESETS:
@@ -45,15 +31,13 @@ class MinesweeperGame:
             max_mines = (self.rows * self.cols) - 9
             self.total_mines = max(1, min(max_mines, mines))
 
-        # 1. Initialize Discrete Mathematics Engines
         self.graph = GridGraph(self.rows, self.cols)
         self.set_engine = SetTheoryEngine(self.rows, self.cols)
         self.comb_engine = CombinatoricsEngine()
         self.logic_solver = PropositionalLogicSolver(self.graph)
 
-        # 2. Game State Variables
         self.clues: Dict[Vertex, int] = {}
-        self.status: str = "ready"  # "ready", "playing", "won", "lost"
+        self.status: str = "ready"
         self.first_click_done: bool = False
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
@@ -61,14 +45,9 @@ class MinesweeperGame:
         self.moves_count: int = 0
 
     def _ensure_mines_placed(self, first_r: int, first_c: int) -> None:
-        """
-        Combinatorial placement: Generates mines safely after the first click.
-        guaranteeing the first clicked vertex and its 8-neighborhood are 0-clue.
-        """
         first_click = (first_r, first_c)
         neighbors = self.graph.get_neighbors(first_click)
 
-        # Combinatorics: Random sample from Universe \ (first_click U N(first_click))
         placed_mines = self.comb_engine.generate_safe_mine_placement(
             self.set_engine.universe,
             first_click,
@@ -77,10 +56,9 @@ class MinesweeperGame:
         )
         self.set_engine.mines = placed_mines
 
-        # Precompute clues: h(u) = |N(u) intersect M|
         for v in self.set_engine.universe:
             if v in self.set_engine.mines:
-                self.clues[v] = -1  # Indicates mine
+                self.clues[v] = -1
             else:
                 neighbor_mines = len(set(self.graph.get_neighbors(v)) & self.set_engine.mines)
                 self.clues[v] = neighbor_mines
@@ -90,30 +68,22 @@ class MinesweeperGame:
         self.status = "playing"
 
     def reveal(self, r: int, c: int) -> Dict[str, Any]:
-        """
-        Reveals the cell at (r, c).
-        Applies Graph BFS traversal if cell is a zero-clue vertex.
-        """
         target: Vertex = (r, c)
 
         if self.status in ["won", "lost"]:
             return self.get_state()
 
-        # Cannot reveal out of bounds or flagged cells
         if target not in self.set_engine.universe or target in self.set_engine.flagged:
             return self.get_state()
 
-        # Already revealed cell: If clicked again, attempt chord reveal
         if target in self.set_engine.revealed:
             return self.chord_reveal(r, c)
 
-        # Place mines safely on first move
         if not self.first_click_done:
             self._ensure_mines_placed(r, c)
 
         self.moves_count += 1
 
-        # Check if mine was clicked (Loss condition: R intersect M != empty)
         if target in self.set_engine.mines:
             self.status = "lost"
             self.end_time = time.time()
@@ -121,7 +91,6 @@ class MinesweeperGame:
             self.set_engine.revealed.add(target)
             return self.get_state()
 
-        # Clue check: if 0-cell, use BFS cascade to find connected component
         clue = self.clues.get(target, 0)
         if clue == 0:
             cascade_cells = self.graph.bfs_cascade(
@@ -134,21 +103,14 @@ class MinesweeperGame:
         else:
             self.set_engine.revealed.add(target)
 
-        # Check Victory Condition: R == S  <=>  |S \ R| == 0
         if self.set_engine.is_victory():
             self.status = "won"
             self.end_time = time.time()
-            # Automatically flag all mines upon winning
             self.set_engine.flagged = set(self.set_engine.mines)
 
         return self.get_state()
 
     def chord_reveal(self, r: int, c: int) -> Dict[str, Any]:
-        """
-        Chording action:
-        When a revealed numbered cell has exactly as many flagged neighbors as its clue,
-        reveal all other unflagged neighbors.
-        """
         target = (r, c)
         if target not in self.set_engine.revealed or self.status != "playing":
             return self.get_state()
@@ -175,7 +137,6 @@ class MinesweeperGame:
         return self.get_state()
 
     def toggle_flag(self, r: int, c: int) -> Dict[str, Any]:
-        """Toggles flag on coordinate (r, c)."""
         if self.status in ["won", "lost"]:
             return self.get_state()
 
@@ -184,10 +145,6 @@ class MinesweeperGame:
         return self.get_state()
 
     def get_hint(self) -> Dict[str, Any]:
-        """
-        Uses Propositional Logic Solver to deduce provably safe or mine cells.
-        Returns deduction information.
-        """
         if not self.first_click_done or self.status != "playing":
             return {"type": "none", "message": "Make your first move to enable logic deduction."}
 
@@ -218,7 +175,6 @@ class MinesweeperGame:
         }
 
     def get_elapsed_seconds(self) -> int:
-        """Returns elapsed game duration in integer seconds."""
         if not self.start_time:
             return 0
         if self.end_time:
@@ -226,10 +182,6 @@ class MinesweeperGame:
         return int(time.time() - self.start_time)
 
     def get_state(self) -> Dict[str, Any]:
-        """
-        Serializes current board state safely for frontend consumption.
-        Mines remain hidden unless game status is won or lost.
-        """
         grid = []
         is_over = self.status in ["won", "lost"]
 
@@ -252,7 +204,6 @@ class MinesweeperGame:
                     cell_data["clue"] = self.clues.get(v, 0)
                     cell_data["isMine"] = is_mine
                 elif is_over:
-                    # Reveal board secrets when game ends
                     cell_data["isMine"] = is_mine
                     if is_mine:
                         cell_data["clue"] = -1
