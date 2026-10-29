@@ -4,6 +4,8 @@ from collections import deque
 import math
 import random
 
+Vertex = Tuple[int, int]  
+Edge = Tuple[Vertex, Vertex] 
 
 class GridGraph:
     
